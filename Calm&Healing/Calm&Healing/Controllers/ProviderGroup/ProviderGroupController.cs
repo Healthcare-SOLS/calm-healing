@@ -29,7 +29,7 @@ namespace Calm_Healing.Controllers.Authentication
             return Ok(result);
         }
 
-        [HttpPost("refresh-token")]
+        [HttpPost("refresh-token1")]
         public async Task<IActionResult> RefreshToken([FromBody] TokenResponse tokenResponse)
         {
             var result = await _auht.RefreshToken(tokenResponse);

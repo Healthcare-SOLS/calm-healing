@@ -1,4 +1,3 @@
-using Calm_Healing.DAL.DynamicModels;
 using Calm_Healing.DAL.Models;
 using Calm_Healing.Respository;
 using Calm_Healing.Respository.IRepository;
@@ -56,7 +55,10 @@ builder.Services.AddScoped<IAuthentication, Authentication>();
 builder.Services.AddScoped<IAESHelper, AESHelper>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<ISendEmail, SendEmail>();
-builder.Services.AddScoped<IDynamicSchemaService, DynamicSchemaService>();
+builder.Services.AddScoped<IProvideUserService, ProvideUserService>();
+builder.Services.AddScoped<IProvideUserRepository, ProvideUserRepository>();
+builder.Services.AddScoped<IProviderGroupRepository, ProviderGroupRepository>();
+builder.Services.AddScoped<IProviderGroupService, ProviderGroupService>();
 builder.Services.AddScoped<IGenericRepositoryFactory, GenericRepositoryFactory>();
 
 var app = builder.Build();
