@@ -9,11 +9,12 @@ namespace Calm_Healing.Controllers.Admin
     public class AdminAuthenticationController : ControllerBase
     {
         private readonly IAuthentication _auht;
-        //private readonly IDynamicSchemaService _dynamicSchemaService;
+       
 
         public AdminAuthenticationController(IAuthentication auht)
         {
             _auht = auht;
+            
         }
 
         [HttpPost("admin-login")]
@@ -44,11 +45,11 @@ namespace Calm_Healing.Controllers.Admin
             return Ok(result);
         }
 
-        //[HttpPost("create-schema")]
-        //public async Task<IActionResult> NewSchema()
-        //{
-        //    await _dynamicSchemaService.CreateSchemaAndTablesAsync("Kamlesh80913");
-        //    return Ok("Schema created successfully.");
-        //}
+        /*[HttpPost("create-schema")]
+        public async Task<IActionResult> NewSchema()
+        {
+            await _dynamicSchemaService.CreateSchemaAndTablesAsync("Kamlesh80913");
+            return Ok("Schema created successfully.");
+        }*/
     }
 }

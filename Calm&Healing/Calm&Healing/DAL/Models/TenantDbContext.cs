@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using Calm_Healing.Service.IService;
 using Microsoft.EntityFrameworkCore;
-
+//using Microsoft.EntityFrameworkCore.ChangeTracking;
 namespace Calm_Healing.DAL.Models;
 
 public partial class TenantDbContext : DbContext
@@ -9,10 +10,12 @@ public partial class TenantDbContext : DbContext
     public TenantDbContext()
     {
     }
-
-    public TenantDbContext(DbContextOptions<TenantDbContext> options)
+    private readonly ICurrentUserService _currentUserService;
+    // Add a constructor that accepts ICurrentUserService:
+    public TenantDbContext(DbContextOptions<TenantDbContext> options, ICurrentUserService currentUserService)
         : base(options)
     {
+        _currentUserService = currentUserService;
     }
 
     public virtual DbSet<Address> Addresses { get; set; }
@@ -1228,6 +1231,76 @@ public partial class TenantDbContext : DbContext
         });
 
         OnModelCreatingPartial(modelBuilder);
+    }
+    // Add these methods before the OnConfiguring method:
+    public override int SaveChanges()
+    {
+        UpdateAuditFields();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        UpdateAuditFields();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    /*private void UpdateAuditFields()
+    {
+        var userName = _currentUserService?.GetCurrentUsername() ?? "System";
+        var now = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
+
+        foreach (var entry in ChangeTracker.Entries<Location>())
+        {
+            if (entry.State == EntityState.Added)
+            {
+                entry.Entity.CreatedBy = userName;
+                entry.Entity.Created = now;
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                entry.Entity.ModifiedBy = userName;
+                entry.Entity.Modified = now;
+            }
+        }
+    }*/
+
+    private void UpdateAuditFields()
+    {
+        var userName = _currentUserService?.GetCurrentUsername() ?? "System";
+        var now = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
+
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            switch (entry.Entity)
+            {
+                case Location location:
+                    if (entry.State == EntityState.Added)
+                    {
+                        location.CreatedBy = userName;
+                        location.Created = now;
+                    }
+                    else if (entry.State == EntityState.Modified)
+                    {
+                        location.ModifiedBy = userName;
+                        location.Modified = now;
+                    }
+                    break;
+
+                case Address address:
+                    if (entry.State == EntityState.Added)
+                    {
+                        address.CreatedBy = userName;
+                        address.Created = now;
+                    }
+                    else if (entry.State == EntityState.Modified)
+                    {
+                        address.ModifiedBy = userName;
+                        address.Modified = now;
+                    }
+                    break;
+            }
+        }
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

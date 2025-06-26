@@ -7,8 +7,11 @@ using Calm_Healing.Utilities;
 using Calm_Healing.Utilities.IUtilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using System.Reflection;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,17 +39,37 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
 });
-
-builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+}); 
 
 //DB service registration
 
-builder.Services.AddDbContext<TenantDbContext>(options =>
+builder.Services.AddDbContext<TenantDbContext>((provider, options) =>
 {
+    var currentUserService = provider.GetRequiredService<ICurrentUserService>();
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+    // Call constructor manually with options + service
+   // options.UseInternalServiceProvider(provider);
+});
+builder.Services.AddDbContext<TenantDbContext>((provider, options) =>
+{
+    var config = provider.GetRequiredService<IConfiguration>();
+    var currentUserService = provider.GetRequiredService<ICurrentUserService>();
+    options.UseNpgsql(config.GetConnectionString("DefaultConnection"));
 });
 
 //Service registration
@@ -60,6 +83,9 @@ builder.Services.AddScoped<IProvideUserRepository, ProvideUserRepository>();
 builder.Services.AddScoped<IProviderGroupRepository, ProviderGroupRepository>();
 builder.Services.AddScoped<IProviderGroupService, ProviderGroupService>();
 builder.Services.AddScoped<IGenericRepositoryFactory, GenericRepositoryFactory>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<ILocationRepository, LocationRepository>();
+builder.Services.AddScoped<ILocationService, LocationService>();
 
 var app = builder.Build();
 
@@ -75,6 +101,7 @@ app.UseSwaggerUI(c =>
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
