@@ -1,6 +1,8 @@
 ﻿using Calm_Healing.DAL.DTOs;
 using Calm_Healing.DAL.Models;
 using Calm_Healing.Respository.IRepository;
+using Calm_Healing.Utilities;
+using Calm_Healing.Utilities.IUtilities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Calm_Healing.Respository
@@ -8,10 +10,12 @@ namespace Calm_Healing.Respository
     public class ProvideUserRepository : IProvideUserRepository
     {
         private readonly TenantDbContext _context;
+        private readonly IAESHelper _aesHelper;
 
-        public ProvideUserRepository(TenantDbContext context)
+        public ProvideUserRepository(TenantDbContext context, IAESHelper aesHelper)
         {
             _context = context;
+            _aesHelper = aesHelper;
         }
 
         public async Task<IEnumerable<(User user, Clinician clinician, Role? role)>> GetAllProvideUsersAsync(int pageNumber, int pageSize)
@@ -64,9 +68,9 @@ namespace Calm_Healing.Respository
                 return false;
 
             // Update User fields
-            user.FirstName = dto.FirstName;
-            user.LastName = dto.LastName;
-            user.Email = dto.Email;
+            user.FirstName = _aesHelper.Encrypt(dto.FirstName);
+            user.LastName = _aesHelper.Encrypt(dto.LastName);
+            user.Email = _aesHelper.Encrypt(dto.Email);
             user.PhoneNumber = dto.PhoneNumber;
             user.Modified = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
 

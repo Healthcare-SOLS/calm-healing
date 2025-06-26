@@ -2,6 +2,7 @@
 using Calm_Healing.DAL.Models;
 using Calm_Healing.Respository.IRepository;
 using Calm_Healing.Service.IService;
+using Calm_Healing.Utilities.IUtilities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Calm_Healing.Service
@@ -10,11 +11,13 @@ namespace Calm_Healing.Service
     {
         private readonly IProvideUserRepository _repository;
         private readonly TenantDbContext _context;
+        private readonly IAESHelper _aesHelper;
 
-        public ProvideUserService(IProvideUserRepository repository, TenantDbContext context)
+        public ProvideUserService(IProvideUserRepository repository, TenantDbContext context, IAESHelper aesHelper)
         {
             _repository = repository;
             _context = context;
+            _aesHelper = aesHelper;
         }
 
         public async Task<IEnumerable<ProvideUserDTO>> GetAllAsync(int pageNumber = 1, int pageSize = 10)
@@ -24,9 +27,9 @@ namespace Calm_Healing.Service
             return results.Select(r => new ProvideUserDTO
             {
                 Id = r.user.Id,
-                FirstName = r.user.FirstName,
-                LastName = r.user.LastName,
-                Email = r.user.Email,
+                FirstName = _aesHelper.Decrypt(r.user.FirstName),
+                LastName = _aesHelper.Decrypt(r.user.LastName),
+                Email = _aesHelper.Decrypt(r.user.Email),
                 PhoneNumber = r.user.PhoneNumber,
                 NpiNumber = r.clinician.NpiNumber,
                 LanguagesSpoken = r.clinician.LanguagesSpoken,
@@ -43,10 +46,10 @@ namespace Calm_Healing.Service
             var user = new User
             {
                 Id = dto.Id,
-                FirstName = dto.FirstName,
-                LastName = dto.LastName,
-                Email = dto.Email,
-                PhoneNumber = dto.PhoneNumber,
+                FirstName = _aesHelper.Encrypt(dto.FirstName),
+                LastName = _aesHelper.Encrypt(dto.LastName),
+                Email = _aesHelper.Encrypt(dto.Email),
+                PhoneNumber = _aesHelper.Encrypt(dto.PhoneNumber),
                 IamId = Guid.NewGuid().ToString(),
                 Uuid = Guid.NewGuid(),
                 Active = true,
@@ -60,7 +63,7 @@ namespace Calm_Healing.Service
             var clinician = new Clinician
             {
                 Uuid = Guid.NewGuid(),
-                NpiNumber = dto.NpiNumber,
+                NpiNumber = _aesHelper.Encrypt(dto.NpiNumber),
                 LanguagesSpoken = dto.LanguagesSpoken,
                 Created = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
                 Modified = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified),
