@@ -15,9 +15,9 @@ using System.Text.Json.Serialization;
 using Serilog;
 using System.IO;
 
-var logDirectory = "C:\\MentalEMR\\calm-healing\\Calm&Healing\\Calm&Healing\\Logs";
-// ?? Create Logs directory if it doesn't exist
-Directory.CreateDirectory(logDirectory);
+//var logDirectory = "C:\\Users\\LNV-149\\Desktop\\NewProject_MH\\calm-healing\\Calm&Healing\\Calm&Healing\\Logs";
+//\bin\Debug\net8.0\Logs\
+var logDirectory = Path.Combine(AppContext.BaseDirectory, "Logs");
 
 // ?? Define log path with rolling log files
 var logPath = Path.Combine(logDirectory, "log-.txt");
