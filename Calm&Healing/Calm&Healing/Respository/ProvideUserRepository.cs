@@ -71,13 +71,36 @@ namespace Calm_Healing.Respository
             user.FirstName = _aesHelper.Encrypt(dto.FirstName);
             user.LastName = _aesHelper.Encrypt(dto.LastName);
             user.Email = _aesHelper.Encrypt(dto.Email);
-            user.PhoneNumber = dto.PhoneNumber;
+            user.PhoneNumber = _aesHelper.Encrypt(dto.PhoneNumber);
             user.Modified = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
 
             // Update Clinician fields
-            clinician.NpiNumber = dto.NpiNumber;
+            clinician.NpiNumber = _aesHelper.Encrypt(dto.NpiNumber);
             clinician.LanguagesSpoken = dto.LanguagesSpoken;
             clinician.Modified = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
+
+            // Update or create ClinicianLocationMapping
+            if (dto.LocationId.HasValue)
+            {
+                var mapping = await _context.ClinicianLocationMappings
+                    .FirstOrDefaultAsync(m => m.ClinicianId == clinician.Id);
+
+                if (mapping != null)
+                {
+                    // Update existing mapping
+                    mapping.LocationId = dto.LocationId.Value;
+                }
+                else
+                {
+                    // Add new mapping
+                    var newMapping = new ClinicianLocationMapping
+                    {
+                        ClinicianId = clinician.Id,
+                        LocationId = dto.LocationId.Value
+                    };
+                    _context.ClinicianLocationMappings.Add(newMapping);
+                }
+            }
 
             _context.Users.Update(user);
             _context.Clinicians.Update(clinician);

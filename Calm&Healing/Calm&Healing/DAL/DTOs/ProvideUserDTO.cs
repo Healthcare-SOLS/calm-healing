@@ -22,6 +22,5 @@ namespace Calm_Healing.DAL.DTOs
         public string? LocationName { get; set; }
         public bool? Status { get; set; }
         public string? LanguagesSpoken { get; set; }
-
     }
 }
