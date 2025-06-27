@@ -15,7 +15,7 @@ using System.Text.Json.Serialization;
 using Serilog;
 using System.IO;
 
-var logDirectory = "C:\\Users\\LNV-149\\Desktop\\NewProject_MH\\calm-healing\\Calm&Healing\\Calm&Healing\\Logs";
+var logDirectory = "C:\\MentalEMR\\calm-healing\\Calm&Healing\\Calm&Healing\\Logs";
 // ?? Create Logs directory if it doesn't exist
 Directory.CreateDirectory(logDirectory);
 

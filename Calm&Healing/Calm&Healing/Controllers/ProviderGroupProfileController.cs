@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Calm_Healing.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/[controller]")]
     [ApiController]
     public class ProviderGroupProfileController : ControllerBase
     {
@@ -15,7 +15,7 @@ namespace Calm_Healing.Controllers
         {
             _service = service;
         }
-        [HttpGet("GetProviderGroupDetails")]
+        [HttpGet]
         public async Task<IActionResult> GetPracticeDetails()
         {
             var result = await _service.GetPracticeDetailsAsync();
@@ -24,7 +24,7 @@ namespace Calm_Healing.Controllers
 
             return Ok(result);
         }
-        [HttpPut("UpdateProviderGroupDetails")]
+        [HttpPut]
         public async Task<IActionResult> UpdatePractice([FromBody] PracticeUpdateDto dto)
         {
             var updated = await _service.UpdatePracticeAsync(dto);

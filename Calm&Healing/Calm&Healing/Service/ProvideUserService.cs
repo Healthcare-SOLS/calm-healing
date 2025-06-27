@@ -36,12 +36,36 @@ namespace Calm_Healing.Service
                 Status = r.clinician.Status,
                 RoleName = r.role?.RoleName,
                 LocationId = r.clinician.ClinicianLocationMappings.FirstOrDefault()?.LocationId,
-                LocationName = r.clinician.ClinicianLocationMappings.FirstOrDefault()?.Location?.LocationName
+                LocationName = r.clinician.ClinicianLocationMappings.FirstOrDefault()?.Location?.LocationName,
+                   RoleId = r.user.UserRoles.FirstOrDefault()?.RoleId,    // ✅ Add this
             });
+        }
+        public async Task<ProvideUserDTO?> GetByIdAsync(long id)
+        {
+            var result = await _repository.GetProvideUserByIdAsync(id);
+
+            if (result.user == null || result.clinician == null)
+                return null;
+
+            return new ProvideUserDTO
+            {
+                Id = result.user.Id,
+                FirstName = _aesHelper.Decrypt(result.user.FirstName),
+                LastName = _aesHelper.Decrypt(result.user.LastName),
+                Email = _aesHelper.Decrypt(result.user.Email),
+                PhoneNumber = _aesHelper.Decrypt(result.user.PhoneNumber),
+                NpiNumber = _aesHelper.Decrypt(result.clinician.NpiNumber),
+                LanguagesSpoken = result.clinician.LanguagesSpoken,
+                Status = result.clinician.Status,
+                RoleName = result.role?.RoleName,
+                RoleId = result.role?.Id ?? 0,
+                LocationId = result.clinician.ClinicianLocationMappings.FirstOrDefault()?.LocationId,
+                LocationName = result.clinician.ClinicianLocationMappings.FirstOrDefault()?.Location?.LocationName
+            };
         }
 
 
-        public async Task AddAsync(ProvideUserDTO dto, long roleId)
+        public async Task AddAsync(ProvideUserCreateUpdateDTO dto)
         {
             var user = new User
             {
@@ -72,7 +96,7 @@ namespace Calm_Healing.Service
             };
 
             // Save user + clinician first so we get clinician.Id
-            await _repository.AddProvideUserAsync(user, clinician, roleId);
+            await _repository.AddProvideUserAsync(user, clinician, dto.RoleId!.Value);
 
             // Save location mapping if LocationId is provided
             if (dto.LocationId.HasValue)
@@ -87,7 +111,7 @@ namespace Calm_Healing.Service
             }
         }
 
-        public async Task<bool> UpdateAsync(ProvideUserDTO dto)
+        public async Task<bool> UpdateAsync(ProvideUserCreateUpdateDTO dto)
         {
             return await _repository.UpdateProvideUserAsync(dto);
         }
