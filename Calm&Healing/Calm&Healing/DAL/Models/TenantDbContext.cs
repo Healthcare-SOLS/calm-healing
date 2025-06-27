@@ -1267,7 +1267,7 @@ public partial class TenantDbContext : DbContext
 
     private void UpdateAuditFields()
     {
-        var userName = _currentUserService?.GetCurrentUsername() ?? "System";
+        var userName = _currentUserService?.GetCurrentUserId() ?? "System";
         var now = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
 
         foreach (var entry in ChangeTracker.Entries())

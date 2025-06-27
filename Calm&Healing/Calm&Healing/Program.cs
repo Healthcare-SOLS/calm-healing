@@ -12,9 +12,29 @@ using Microsoft.IdentityModel.Tokens;
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
+using Serilog;
+using System.IO;
+
+var logDirectory = "C:\\Users\\LNV-149\\Desktop\\NewProject_MH\\calm-healing\\Calm&Healing\\Calm&Healing\\Logs";
+// ?? Create Logs directory if it doesn't exist
+Directory.CreateDirectory(logDirectory);
+
+// ?? Define log path with rolling log files
+var logPath = Path.Combine(logDirectory, "log-.txt");
+// ?? Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Verbose() // ?? Capture all log levels
+    .WriteTo.Console()
+    .WriteTo.File(
+        path: logPath,
+        rollingInterval: RollingInterval.Day,              // ?? One log file per day
+        retainedFileCountLimit: 7,                         // ?? Keep last 7 days of logs
+        outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
+    )
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Host.UseSerilog();
 // Add services to the container.
 //JWT TokenAuthentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

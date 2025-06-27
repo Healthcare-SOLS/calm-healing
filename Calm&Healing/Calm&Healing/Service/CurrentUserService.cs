@@ -12,9 +12,13 @@ namespace Calm_Healing.Service
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public string GetCurrentUsername()
+        public string GetCurrentUserId()
         {
-            return _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Name) ?? "System";
+            var user = _httpContextAccessor.HttpContext?.User;
+            return user?.Identity?.IsAuthenticated == true
+                ? user.FindFirstValue("sub") ?? "Unknown"
+                : "System";
         }
+
     }
 }

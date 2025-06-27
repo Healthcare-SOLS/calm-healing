@@ -14,9 +14,11 @@ namespace Calm_Healing.Service
     public class LocationService : ILocationService
     {
         private readonly ILocationRepository _locationRepository;
+        private readonly ILogger<LocationService> _logger;
 
-        public LocationService(ILocationRepository locationRepository)
+        public LocationService(ILocationRepository locationRepository, ILogger<LocationService> logger)
         {
+            _logger = logger;
             _locationRepository = locationRepository;
         }
     
@@ -25,6 +27,7 @@ namespace Calm_Healing.Service
         {
             try
             {
+                _logger.LogInformation("AddLocationAsync called at {Time}", DateTime.UtcNow);
                 // Convert DTO to Entity
                 var location = new Location
                 {
@@ -37,7 +40,7 @@ namespace Calm_Healing.Service
                     Fax = locationDto.Fax,
                     Archive = false // Always set to false for new locations
                 };
-
+                //_logger.LogDebug("Mapping basic location info: {@Location}", location);
                 // Handle Address if provided
                 if (locationDto.Address != null)
                 {
@@ -50,14 +53,14 @@ namespace Calm_Healing.Service
                         State = locationDto.Address.State,
                         Zipcode = locationDto.Address.Zipcode
                     };
+                    //_logger.LogDebug("Mapping address info: {@Address}", location.Address);
                 }
-
+                _logger.LogInformation("Location successfully saved with UUID: {Uuid}", location.Uuid);
                 await _locationRepository.AddLocationAsync(location);
             }
             catch (Exception ex)
             {
-                // Log the general exception
-                // _logger.LogError(ex, "Error occurred while creating location");
+                _logger.LogError(ex, "Exception occurred while creating a new location");
                 throw; // Rethrow to be handled by the controller
             }
         }
@@ -66,10 +69,13 @@ namespace Calm_Healing.Service
         {
             try
             {
-
+                _logger.LogInformation("GetAllLocationsAsync called at {Time} with parameters: page={Page}, pageSize={PageSize}, search={Search}, active={Active}, archive={Archive}", 
+                    DateTime.UtcNow, page, pageSize, searchString, active, archive);
 
                 var (items, totalCount) = await _locationRepository.GetAllLocationsAsync(
                     searchString, active, archive, page, pageSize);
+
+                _logger.LogDebug("Retrieved {Count} locations from repository", items.Count);
 
                 var locationDtos = items.Cast<Location>().Select(location => new LocationResDto
                 {
@@ -92,19 +98,23 @@ namespace Calm_Healing.Service
                     } : null
                 }).ToList();
 
-                return new PagedResult<LocationResDto>
+                var result = new PagedResult<LocationResDto>
                 {
                     Items = locationDtos,
                     TotalCount = totalCount,
                     PageSize = pageSize,
                     CurrentPage = page
                 };
+
+                _logger.LogInformation("Successfully mapped {Count} locations to DTOs out of {Total} total records", 
+                    result.Items.Count, result.TotalCount);
+                
+                return result;
             }
             catch (Exception ex)
             {
-                // Optional: Log the exception
-                // _logger.LogError(ex, "Error occurred while retrieving locations.");
-
+                _logger.LogError(ex, "Error occurred while retrieving locations with parameters: page={Page}, pageSize={PageSize}, search={Search}", 
+                    page, pageSize, searchString);
                 throw new ApplicationException("An error occurred while retrieving the location list.", ex);
             }
         }
@@ -113,9 +123,11 @@ namespace Calm_Healing.Service
         {
             try
             {
-
+                _logger.LogInformation("GetAllClinicianLocationsAsync called at {Time} for clinician ID: {ClinicianId}, page={Page}, size={Size}, search={Search}", 
+                    DateTime.UtcNow, clinicianId, page, size, search);
 
                 var (items, totalCount) = await _locationRepository.GetAllClinicianLocationsAsync(clinicianId, search, page, size);
+                _logger.LogDebug("Retrieved {Count} clinician locations from repository", items.Count);
 
                 // Convert the list of object arrays to a dictionary
                 var locationMap = new Dictionary<string, string>();
@@ -131,19 +143,22 @@ namespace Calm_Healing.Service
                     }
                 }
 
-                return new PagedResult<Dictionary<string, string>>
+                var result = new PagedResult<Dictionary<string, string>>
                 {
                     Items = new List<Dictionary<string, string>> { locationMap },
                     TotalCount = totalCount,
                     PageSize = size,
                     CurrentPage = page
                 };
+
+                _logger.LogInformation("Successfully mapped {Count} clinician locations to dictionary for clinician ID: {ClinicianId}", 
+                    locationMap.Count, clinicianId);
+                
+                return result;
             }
             catch (Exception ex)
             {
-                // Optional: Log the exception
-                // _logger.LogError(ex, "Error occurred while retrieving locations.");
-
+                _logger.LogError(ex, "Error occurred while retrieving clinician locations for clinician ID: {ClinicianId}", clinicianId);
                 throw new ApplicationException("An error occurred while retrieving the All Clinician Locations list.", ex);
             }
         }
@@ -152,16 +167,20 @@ namespace Calm_Healing.Service
         {
             try
             {
-
+                _logger.LogInformation("GetLocationByIdAsync called at {Time} for location ID: {LocationId}", 
+                    DateTime.UtcNow, locationId);
 
                 var location = await _locationRepository.FindByUuidAsync(locationId);
 
                 if (location == null)
                 {
+                    _logger.LogWarning("Location not found with ID: {LocationId}", locationId);
                     throw new KeyNotFoundException($"Cannot find location with id: {locationId}");
                 }
 
-                return new LocationResDto
+                _logger.LogDebug("Location found with name: {LocationName}", location.LocationName);
+
+                var locationDto = new LocationResDto
                 {
                     Uuid = location.Uuid,
                     LocationName = location.LocationName,
@@ -181,32 +200,38 @@ namespace Calm_Healing.Service
                         Zipcode = location.Address.Zipcode
                     } : null
                 };
+
+                _logger.LogInformation("Successfully retrieved and mapped location with ID: {LocationId}", locationId);
+                return locationDto;
+            }
+            catch (KeyNotFoundException ex)
+            {
+                // Let this exception propagate as it's already logged
+                throw;
             }
             catch (Exception ex)
             {
-                // Optional: Log the exception
-                // _logger.LogError(ex, "Error occurred while retrieving locations.");
-
+                _logger.LogError(ex, "Error occurred while retrieving location by ID: {LocationId}", locationId);
                 throw new ApplicationException("An error occurred while retrieving the location by id.", ex);
             }
         }
 
         public async Task UpdateLocationAsync(LocationResDto locationDto)
         {
-            /* if (locationDto.Uuid == null)
-             {
-                 throw new ArgumentException("Location UUID cannot be null");
-             }*/
             try
             {
+                _logger.LogInformation("UpdateLocationAsync called at {Time} for location ID: {LocationId}", 
+                    DateTime.UtcNow, locationDto.Uuid);
+
                 var existingLocation = await _locationRepository.FindByUuidAsync(locationDto.Uuid.Value);
 
                 if (existingLocation == null)
                 {
+                    _logger.LogWarning("Location not found with ID: {LocationId}", locationDto.Uuid);
                     throw new KeyNotFoundException($"Cannot find location with id: {locationDto.Uuid}");
                 }
-                // Set current time as Unspecified kind to avoid PostgreSQL 'timestamp without time zone' issue
-                //var now = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Unspecified);
+
+                _logger.LogDebug("Found existing location: {LocationName}", existingLocation.LocationName);
 
                 // Update location properties
                 existingLocation.LocationName = locationDto.LocationName;
@@ -215,7 +240,8 @@ namespace Calm_Healing.Service
                 existingLocation.GroupNpiNumber = locationDto.GroupNpiNumber;
                 existingLocation.Status = locationDto.Status;
                 existingLocation.Fax = locationDto.Fax;
-                //existingLocation.Modified = now;
+
+                _logger.LogDebug("Updated basic location properties for ID: {LocationId}", locationDto.Uuid);
 
                 // Update address if provided
                 if (locationDto.Address != null)
@@ -231,9 +257,8 @@ namespace Calm_Healing.Service
                             City = locationDto.Address.City,
                             State = locationDto.Address.State,
                             Zipcode = locationDto.Address.Zipcode,
-                            //  Created = now,
-                            // Modified = now
                         };
+                        _logger.LogDebug("Created new address for location ID: {LocationId}", locationDto.Uuid);
                     }
                     else
                     {
@@ -243,18 +268,22 @@ namespace Calm_Healing.Service
                         existingLocation.Address.City = locationDto.Address.City;
                         existingLocation.Address.State = locationDto.Address.State;
                         existingLocation.Address.Zipcode = locationDto.Address.Zipcode;
-                        //existingLocation.Address.Modified = now;
+                        _logger.LogDebug("Updated existing address for location ID: {LocationId}", locationDto.Uuid);
                     }
                 }
 
                 await _locationRepository.UpdateLocationAsync(existingLocation);
+                _logger.LogInformation("Location successfully updated with ID: {LocationId}", locationDto.Uuid);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                // Let this exception propagate as it's already logged
+                throw;
             }
             catch (Exception ex)
             {
-                // Optional: Log the exception
-                // _logger.LogError(ex, "Error occurred while retrieving locations.");
-
-                throw new ApplicationException("An error occurred while retrieving the updating location.", ex);
+                _logger.LogError(ex, "Error occurred while updating location with ID: {LocationId}", locationDto.Uuid);
+                throw new ApplicationException("An error occurred while updating location.", ex);
             }
         }
 
@@ -262,25 +291,36 @@ namespace Calm_Healing.Service
         {
             try
             {
+                _logger.LogInformation("ChangeLocationStatusAsync called at {Time} for location ID: {LocationId}, new status: {Status}", 
+                    DateTime.UtcNow, locationId, status);
 
                 var location = await _locationRepository.FindByUuidAsync(locationId);
 
                 if (location == null)
                 {
+                    _logger.LogWarning("Location not found with ID: {LocationId}", locationId);
                     throw new KeyNotFoundException($"Cannot find location with id: {locationId}");
                 }
+
+                _logger.LogDebug("Found location: {LocationName}, current status: {CurrentStatus}", 
+                    location.LocationName, location.Status);
 
                 location.Status = status;
                 //location.Modified = DateTime.UtcNow;
 
                 await _locationRepository.UpdateLocationAsync(location);
+                _logger.LogInformation("Location status successfully changed to {Status} for location ID: {LocationId}", 
+                    status, locationId);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                // Let this exception propagate as it's already logged
+                throw;
             }
             catch (Exception ex)
             {
-                // Optional: Log the exception
-                // _logger.LogError(ex, "Error occurred while retrieving locations.");
-
-                throw new ApplicationException("An error occurred while retrieving the location list.", ex);
+                _logger.LogError(ex, "Error occurred while changing status for location ID: {LocationId}", locationId);
+                throw new ApplicationException("An error occurred while changing location status.", ex);
             }
         }
 
@@ -288,12 +328,19 @@ namespace Calm_Healing.Service
         {
             try
             {
+                _logger.LogInformation("ArchiveRestoreLocationAsync called at {Time} for location ID: {LocationId}, archive flag: {Flag}", 
+                    DateTime.UtcNow, locationId, flag);
+
                 var location = await _locationRepository.FindByUuidAsync(locationId);
 
                 if (location == null)
                 {
+                    _logger.LogWarning("Location not found with ID: {LocationId}", locationId);
                     throw new KeyNotFoundException($"Cannot find location with id: {locationId}");
                 }
+
+                _logger.LogDebug("Found location: {LocationName}, current archive status: {CurrentArchive}", 
+                    location.LocationName, location.Archive);
 
                 // Set archive status based on flag
                 location.Archive = flag;
@@ -305,13 +352,19 @@ namespace Calm_Healing.Service
                 location.Modified = DateTime.UtcNow;
 
                 await _locationRepository.UpdateLocationAsync(location);
+                _logger.LogInformation("Location {Action} successfully for location ID: {LocationId}", 
+                    flag ? "archived" : "restored", locationId);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                // Let this exception propagate as it's already logged
+                throw;
             }
             catch (Exception ex)
             {
-                // Optional: Log the exception
-                // _logger.LogError(ex, "Error occurred while retrieving locations.");
-
-                throw new ApplicationException("An error occurred while retrieving the location list.", ex);
+                _logger.LogError(ex, "Error occurred while {Action} location with ID: {LocationId}", 
+                    flag ? "archiving" : "restoring", locationId);
+                throw new ApplicationException($"An error occurred while {(flag ? "archiving" : "restoring")} location.", ex);
             }
         }
     }
