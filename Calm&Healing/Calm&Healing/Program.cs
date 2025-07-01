@@ -106,6 +106,8 @@ builder.Services.AddScoped<IGenericRepositoryFactory, GenericRepositoryFactory>(
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<ILocationRepository, LocationRepository>();
 builder.Services.AddScoped<ILocationService, LocationService>();
+builder.Services.AddScoped<IContactRepository, ContactRepository>();
+builder.Services.AddScoped<IContactService, ContactService>();
 
 var app = builder.Build();
 

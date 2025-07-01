@@ -15,21 +15,21 @@ namespace Calm_Healing.Controllers.Authentication
             _auht = auht;
         }
 
-        [HttpPost("provider-login")]
+        [HttpPost("Provider-Login")]
         public async Task<IActionResult> AdminLogin([FromBody] ProviderGroupLoginDTO loginDTO)
         {
             var result = await _auht.LoginUser(loginDTO);
             return Ok(result);
         }
 
-        [HttpPost("provider-registration")]
+        [HttpPost("Provider-Registration")]
         public async Task<IActionResult> AdminRegistration([FromBody] ProviderGroupRegisterDTO registerDTO)
         {
             var result = await _auht.RegisteredUser(registerDTO);
             return Ok(result);
         }
 
-        [HttpPost("pro-refresh-token")]
+        [HttpPost("Pro-Refresh-Token")]
         public async Task<IActionResult> RefreshToken([FromBody] TokenResponse tokenResponse)
         {
             var result = await _auht.RefreshToken(tokenResponse);

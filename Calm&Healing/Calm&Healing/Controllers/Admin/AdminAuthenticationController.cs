@@ -17,28 +17,28 @@ namespace Calm_Healing.Controllers.Admin
             
         }
 
-        [HttpPost("admin-login")]
+        [HttpPost("Admin-Login")]
         public async Task<IActionResult> AdminLogin([FromBody] AdminLoginDTO loginDTO)
         {
             var result = await _auht.LoginUser(loginDTO);
             return Ok(result);
         }
 
-        [HttpPost("admin-registration")]
+        [HttpPost("Admin-Registration")]
         public async Task<IActionResult> AdminRegistration([FromBody] AdminRegisterDTO registerDTO)
         {
             var result = await _auht.RegisteredUser(registerDTO);
             return Ok(result);
         }
 
-        [HttpPost("group-registration")]
+        [HttpPost("Group-Registration")]
         public async Task<IActionResult> GroupRegistration([FromBody] AdminRegisterDTO registerDTO)
         {
             var result = await _auht.GroupRegistration(); // You can pass DTO if needed
             return Ok(result);
         }
 
-        [HttpPost("refresh-token")]
+        [HttpPost("Refresh-Token")]
         public async Task<IActionResult> RefreshToken([FromBody] TokenResponse tokenResponse)
         {
             var result = await _auht.RefreshToken(tokenResponse);

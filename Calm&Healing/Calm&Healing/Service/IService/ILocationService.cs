@@ -14,7 +14,7 @@ namespace Calm_Healing.Service.IService
         Task<PagedResult<Dictionary<string, string>>> GetAllClinicianLocationsAsync(Guid clinicianId, int page, int size, string search);
         Task<LocationResDto> GetLocationByIdAsync(Guid locationId);
         Task UpdateLocationAsync(LocationResDto location);
-        Task ChangeLocationStatusAsync(Guid locationId, bool flag);
+        Task ChangeLocationStatusAsync(Guid locationId, bool status);
         Task ArchiveRestoreLocationAsync(Guid locationId, bool flag);
     }
 

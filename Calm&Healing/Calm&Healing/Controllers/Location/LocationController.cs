@@ -118,7 +118,7 @@ namespace Calm_Healing.Controllers.Location
         /// <summary>
         /// Get all locations with pagination
         /// </summary>
-        [HttpGet("GetAllLocations")]
+        [HttpGet("Get-Locations")]
         public async Task<ActionResult<ResponseDto<PagedResult<LocationResDto>>>> GetAllLocations(
             [FromQuery] int page = 0, 
             [FromQuery] int pageSize = 10, 
@@ -179,7 +179,7 @@ namespace Calm_Healing.Controllers.Location
         /// <summary>
         /// Enable or disable location
         /// </summary>
-        [HttpPut("location/Change-Status/{locationId}")]
+        [HttpPut("Change-Location-Status/{locationId}")]
         public async Task<ActionResult<ResponseDto<object>>> ChangeLocationStatus([FromRoute] Guid locationId, [FromQuery] bool status)
         {
             _logger.LogInformation("ChangeLocationStatus API called at {Time} for location ID: {LocationId}, new status: {Status}", 
@@ -213,7 +213,7 @@ namespace Calm_Healing.Controllers.Location
         /// <summary>
         /// Archive or restore location
         /// </summary>
-        [HttpPut("location/archive-restore/{locationId}")]
+        [HttpPut("Archive-Restore/{locationId}")]
         public async Task<ActionResult<ResponseDto<object>>> ArchiveRestoreLocation([FromRoute] Guid locationId, [FromQuery] bool flag)
         {
             _logger.LogInformation("ArchiveRestoreLocation API called at {Time} for location ID: {LocationId}, archive flag: {Flag}", 

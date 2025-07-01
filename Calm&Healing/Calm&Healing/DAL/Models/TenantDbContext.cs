@@ -1274,6 +1274,18 @@ public partial class TenantDbContext : DbContext
         {
             switch (entry.Entity)
             {
+                case Contact contact:
+                    if (entry.State == EntityState.Added)
+                    {
+                        contact.CreatedBy = userName;
+                        contact.Created = now;
+                    }
+                    else if (entry.State == EntityState.Modified)
+                    {
+                        contact.ModifiedBy = userName;
+                        contact.Modified = now;
+                    }
+                    break;
                 case Location location:
                     if (entry.State == EntityState.Added)
                     {
